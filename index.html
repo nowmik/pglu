@@ -7,8 +7,8 @@
   <meta name="description" content="저택의 초대장 · 방문 예약" />
   <title>Pumping Ghost Love You — Invitation</title>
   <link rel="preload" href="manor.webp" as="image" />
-  <link rel="stylesheet" href="style.css?v=3" />
-  <script src="config.js" defer></script>
+  <link rel="stylesheet" href="style.css?v=4" />
+  <script src="config.js?v=4" defer></script>
   <script src="app.js?v=3" defer></script>
 </head>
 <body>
@@ -88,8 +88,8 @@
 
     <!-- STEP 4: 방 탐색 -->
     <section class="screen room-screen" data-screen="4" aria-labelledby="roomHeading" hidden>
-      <div class="room-header"><h1 id="roomHeading">저택의 응접실</h1><p>물건을 눌러 기억을 살펴보세요. 좌우로 밀어서 탐색할 수 있습니다.</p></div>
-      <div class="panorama-viewport" id="roomViewport" tabindex="0" aria-label="좌우로 탐색할 수 있는 저택 내부 이미지">
+      <div class="room-header"><h1 id="roomHeading">저택의 응접실</h1><p>책장, 가족사진, 책을 눌러 단서를 확인하세요.</p></div>
+      <div class="panorama-viewport" id="roomViewport" tabindex="0" aria-label="전체가 보이는 저택 응접실 이미지">
         <div class="panorama-stage" id="panoramaStage">
           <img src="room.webp" alt="책장, 가족사진, 탁자 위 책이 보이는 저택 응접실" draggable="false" />
           <button class="hotspot hotspot-shelf" type="button" data-item="revolver"><span>책장 살펴보기</span></button>
@@ -102,26 +102,18 @@
 
     <!-- STEP 5: 잊어버린 것 + 탭하면 주의문 -->
     <section class="screen forgotten-screen" data-screen="5" aria-label="무언가 잊어버린 것 같다" hidden>
-      <button type="button" id="revealNotice" class="forgotten-button">
+      <button type="button" id="revealNotice" class="forgotten-button" aria-label="화면을 눌러 마지막 안내 확인하기">
         <img src="forgotten.webp" alt="어두운 서재. 무언가 잊어버린 것 같다." />
-        <span class="tap-prompt">화면을 눌러 마지막 안내 확인하기 <span aria-hidden="true">›</span></span>
       </button>
     </section>
 
-    <!-- 5단계 마지막의 추가 안내 화면 -->
-    <section class="screen note-screen" data-screen="notice" aria-labelledby="noticeHeading" hidden>
-      <div class="notice-card">
-        <div class="notice-mark">Invitation</div>
-        <div class="notice-line" aria-hidden="true">✦ ───────── ✦</div>
-        <h1 id="noticeHeading">NOTE</h1>
-        <p class="notice-lead">저택의 마당에 개들이 있습니다.</p>
-        <p>짖거나 공격할 수 있으니<br />들어오실 때 주의하시길 바랍니다.</p>
-        <div class="notice-line" aria-hidden="true">✦ ───────── ✦</div>
-        <p id="noticeConfirmed" class="notice-confirmed">당신의 방문이 등록되었습니다.</p>
-        <p id="finalSummary" class="notice-summary"></p>
-        <p class="notice-small">예약 정보는 제작자에게 전달됩니다.<br />입금이나 온라인 결제는 필요하지 않습니다.</p>
-        <button type="button" class="outline-button" id="restartButton">처음 화면으로</button>
-      </div>
+    <!-- 마지막 화면: 기획자가 직접 제공한 원본 이미지. 내용을 임의로 수정하거나 재구성하지 않습니다. -->
+    <section class="screen note-screen" data-screen="notice" aria-label="마지막 방문 안내" hidden>
+      <img class="original-final-art" src="final-original.png" alt="방문 안내와 입금 및 확인 안내가 포함된 원본 초대장" />
+      <button type="button" class="final-restart" id="restartButton">처음 화면으로 돌아가기</button>
+      <!-- 기존 app.js의 예약 결과 표시 노드를 유지하되, 원본 이미지 위에는 표시하지 않습니다. -->
+      <p id="noticeConfirmed" class="sr-only" aria-live="polite"></p>
+      <p id="finalSummary" class="sr-only" aria-live="polite"></p>
     </section>
   </main>
 
