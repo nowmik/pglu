@@ -8,11 +8,19 @@
     '2026-11-15-14': '11월 15일 오후 2시',
     '2026-11-15-19': '11월 15일 오후 7시'
   };
+  // 첫 번째 응접실과 두 번째 응접실에는 서로 다른 이미지가 나타납니다.
   const ITEM_IMAGES = {
-    book: { src: 'book.webp', title: '이방인' },
-    revolver: { src: 'revolver.webp', title: '리볼버' },
-    family: { src: 'family.webp', title: '가족사진' },
-    clock: { src: 'clock.png', title: '괴종시계' }
+    first: {
+      book: { src: 'book.webp', title: '이방인' },
+      revolver: { src: 'revolver.webp', title: '리볼버' },
+      family: { src: 'family.webp', title: '가족사진' }
+    },
+    second: {
+      book: { src: 'book-second.webp', title: '이방인' },
+      revolver: { src: 'revolver-second.webp', title: '리볼버' },
+      family: { src: 'family-second.webp', title: '가족사진' },
+      clock: { src: 'clock-second.webp', title: '괘종시계' }
+    }
   };
 
   let currentStep = 1;
@@ -278,7 +286,7 @@
     button.addEventListener('click', () => {
       const id = button.dataset.item;
       const room = button.dataset.room;
-      const item = ITEM_IMAGES[id];
+      const item = ITEM_IMAGES[room]?.[id];
       if (!item) return;
       if (room === 'second') {
         discoveredSecond.add(id);

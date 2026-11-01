@@ -7,9 +7,9 @@
   <meta name="description" content="저택의 초대장 · 방문 예약" />
   <title>Pumping Ghost Love You — Invitation</title>
   <link rel="preload" href="manor.webp" as="image" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=7" />
   <script src="config.js?v=4" defer></script>
-  <script src="app.js?v=5" defer></script>
+  <script src="app.js?v=7" defer></script>
 </head>
 <body>
   <main id="app" class="app">
@@ -52,7 +52,7 @@
                 <span>연락처 <em>CONTACT NUMBER</em></span>
                 <input id="phoneInput" type="tel" name="phone" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="010 - 0000 - 0000" required />
               </label>
-              <label class="consent"><input id="privacyConsent" type="checkbox" required /><span><strong>[필수] 개인정보 수집·이용 동의</strong><small>예약 확인과 안내를 위해 이름·전화번호·방문 일정·인원을 수집하며, 행사 종료 후 30일 이내 삭제합니다. 운영자는 실제 정책에 맞게 이 안내를 수정해야 합니다.</small></span></label>
+              <label class="consent"><input id="privacyConsent" type="checkbox" required /><span><strong>[필수] 개인정보 수집·이용 동의</strong><small>예약 확인과 안내를 위해 이름·전화번호·방문 일정·인원을 수집하며, 행사 종료 후 30일 이내 삭제합니다.</small></span></label>
               <p class="inline-error" id="guestError" role="alert" hidden></p>
               <button type="submit" class="gold-button guest-submit"><span aria-hidden="true">✧</span> 명부를 제출하고 계속하기 <span aria-hidden="true">✧</span></button>
             </div>
@@ -107,7 +107,7 @@
 
     <!-- STEP 6: 두 번째 응접실 탐색 -->
     <section class="screen room-screen second-room-screen" data-screen="6" aria-labelledby="roomHeading2" hidden>
-      <div class="room-header"><h1 id="roomHeading2">응접실을 다시 둘러본다</h1><p>이번에는 괘종시계까지 포함해 네 가지를 모두 확인하세요.</p></div>
+      <div class="room-header"><h1 id="roomHeading2">응접실을 다시 둘러본다</h1><p>익숙하지만 다른 단서들. 네 가지를 다시 확인하세요.</p></div>
       <div class="panorama-viewport" id="roomViewport2" tabindex="0" aria-label="다시 살펴보는 응접실 이미지">
         <div class="panorama-stage panorama-stage-second" id="panoramaStage2">
           <img src="room.webp" alt="책장, 가족사진, 탁자 위 책, 괘종시계가 있는 저택 응접실" draggable="false" />
