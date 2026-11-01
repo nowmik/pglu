@@ -2,6 +2,10 @@
 (() => {
   'use strict';
   const $ = (id) => document.getElementById(id);
+  // 1인 13,000원 기준. 변경할 때는 이 숫자만 수정하세요.
+  const PRICE_PER_PERSON = 13000;
+  const PRICE_IMAGES = { 1: 'price-1.png', 2: 'price-2.png', 3: 'price-3.png', 4: 'price-4.png' };
+  const won = amount => amount.toLocaleString('ko-KR') + '원';
   const SLOT_LABELS = {
     '2026-11-14-14': '11월 14일 오후 2시',
     '2026-11-14-19': '11월 14일 오후 7시',
@@ -23,6 +27,60 @@
     }
   };
 
+  // 효과음은 기본 무음입니다. 사용자가 버튼을 눌러 켰을 때만 재생합니다.
+  let audioContext;
+  let soundOn = false;
+  const AudioEngine = window.AudioContext || window.webkitAudioContext;
+  function tone(freq, duration, volume = 0.03, type = 'sine', delay = 0, endFreq = null) {
+    if (!soundOn || !AudioEngine) return;
+    try {
+      if (!audioContext) audioContext = new AudioEngine();
+      if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+      const t = audioContext.currentTime + delay;
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(Math.max(20, freq), t);
+      if (endFreq) oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), t + duration);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), t + 0.018);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+      oscillator.connect(gain).connect(audioContext.destination);
+      oscillator.start(t);
+      oscillator.stop(t + duration + 0.015);
+    } catch (_) { /* 오디오 지원이 없어도 예약 화면은 계속 작동합니다. */ }
+  }
+  function playSound(kind) {
+    if (!soundOn) return;
+    if (kind === 'door') { tone(190, .38, .04, 'triangle', 0, 70); tone(110, .22, .018, 'sawtooth', .11, 62); }
+    else if (kind === 'paper') { tone(420, .13, .018, 'triangle', 0, 250); tone(560, .13, .014, 'triangle', .07, 340); }
+    else if (kind === 'select') { tone(680, .12, .027, 'sine'); tone(910, .18, .018, 'sine', .08); }
+    else if (kind === 'clock') { tone(930, .06, .025, 'square'); tone(650, .08, .020, 'square', .25); }
+    else if (kind === 'item') { tone(330, .15, .016, 'triangle'); }
+    else if (kind === 'complete') { tone(520, .24, .026, 'sine'); tone(650, .30, .023, 'sine', .18); }
+  }
+  $('soundToggle').addEventListener('click', async () => {
+    if (!AudioEngine) { toast('이 브라우저는 효과음을 지원하지 않습니다.'); return; }
+    soundOn = !soundOn;
+    $('soundToggle').setAttribute('aria-pressed', String(soundOn));
+    $('soundToggle').setAttribute('aria-label', soundOn ? '효과음 끄기' : '효과음 켜기');
+    $('soundToggle').textContent = soundOn ? '♪ 소리 끄기' : '♪ 소리 켜기';
+    if (soundOn) { if (!audioContext) audioContext = new AudioEngine(); await audioContext.resume(); playSound('select'); }
+  });
+
+  function updatePrice() {
+    // 추가한 동행인의 수만큼 즉시 가격이 바뀝니다. 서버로는 기존대로 인원 명단만 전송합니다.
+    const people = Math.min(4, 1 + document.querySelectorAll('#extraNameFields input').length);
+    const amount = people * PRICE_PER_PERSON;
+    $('guestCount').textContent = people + '명';
+    $('guestTotal').textContent = won(amount);
+    $('bookingPriceDetail').textContent = `${people}명 × ${won(PRICE_PER_PERSON)}`;
+    $('bookingPriceTotal').textContent = won(amount);
+    const picture = $('priceIllustration');
+    picture.src = PRICE_IMAGES[people];
+    picture.alt = `${people}명 방문 안내: ${won(amount)}. 계좌 및 확인 안내`;
+  }
+
   let currentStep = 1;
   let guestNames = [];
   let phone = '';
@@ -34,6 +92,41 @@
   let submitting = false;
   const discoveredFirst = new Set();
   const discoveredSecond = new Set();
+  let scareTimers = [];
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function cancelScareTimers() {
+    scareTimers.forEach(clearTimeout);
+    scareTimers = [];
+  }
+  function setScarePhase(phase) {
+    const stage = $('scareStage');
+    stage.classList.remove('phase-plain', 'phase-flash', 'phase-red');
+    stage.classList.add('phase-' + phase);
+  }
+  function finishScare() {
+    cancelScareTimers();
+    setScarePhase('plain');
+    $('skipScare').hidden = true;
+    $('restartButton').hidden = false;
+    $('scareStatus').textContent = '마지막 장면입니다.';
+  }
+  function startScare() {
+    cancelScareTimers();
+    setScarePhase('plain');
+    $('skipScare').hidden = false;
+    $('restartButton').hidden = true;
+    showStep(8);
+    $('scareStatus').textContent = '마지막 연출이 시작됩니다.';
+    if (reducedMotion) {
+      finishScare();
+      return;
+    }
+    // 시작 후 1초 가면, 4초 점멸, 2초 붉은 글씨 고정, 다시 가면.
+    scareTimers.push(setTimeout(() => setScarePhase('flash'), 1000));
+    scareTimers.push(setTimeout(() => setScarePhase('red'), 5000));
+    scareTimers.push(setTimeout(finishScare, 7000));
+  }
   const preview = new URLSearchParams(location.search).get('preview') === '1';
   const url = String(window.BOOKING_CONFIG?.gasWebAppUrl || '').trim();
   const configured = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url);
@@ -48,6 +141,7 @@
     $('stepNumber').textContent = String(currentStep).padStart(2, '0');
     window.scrollTo(0, 0);
     if (currentStep === 3) refreshAvailability();
+    if (currentStep === 2 || currentStep === 5 || currentStep === 7) playSound('paper');
   }
 
   function toast(message) {
@@ -66,6 +160,7 @@
   function updateGuestButton() {
     const extras = document.querySelectorAll('#extraNameFields input').length;
     $('addGuest').disabled = extras >= 3;
+    updatePrice();
   }
 
   function addNameField() {
@@ -94,7 +189,7 @@
   }
 
   $('addGuest').addEventListener('click', addNameField);
-  $('enterButton').addEventListener('click', () => showStep(2));
+  $('enterButton').addEventListener('click', () => { playSound('door'); showStep(2); });
 
   $('guestForm').addEventListener('submit', (event) => {
     event.preventDefault();
@@ -116,6 +211,7 @@
     guestNames = names;
     phone = digits;
     reservationRequestId = null;
+    updatePrice();
     showStep(3);
   });
 
@@ -222,6 +318,7 @@
       reservationRequestId = null;
       setError('bookingError', '');
       paintSlots();
+      playSound('select');
     });
   });
 
@@ -271,6 +368,7 @@
       $('finalSummary').textContent = `${SLOT_LABELS[selectedSlot]} · ${guestNames.length}명`;
       $('noticeConfirmed').textContent = '당신의 방문이 등록되었습니다.';
       toast('방문 예약이 확정되었습니다.');
+      playSound('complete');
       showStep(4);
     } catch (error) {
       setError('bookingError', error.message);
@@ -298,6 +396,7 @@
       $('itemImage').src = item.src;
       $('itemImage').alt = `${item.title} 단서 이미지`;
       $('itemTitle').textContent = item.title;
+      playSound(id === 'clock' ? 'clock' : 'item');
       $('itemModal').hidden = false;
       $('closeItem').focus();
     });
@@ -310,11 +409,14 @@
     if (event.key === 'Escape' && !$('itemModal').hidden) closeModal();
   });
 
-  $('nextFromRoom').addEventListener('click', () => showStep(5));
-  $('revealSecondRoom').addEventListener('click', () => showStep(6));
-  $('nextFromSecondRoom').addEventListener('click', () => showStep(7));
+  $('nextFromRoom').addEventListener('click', () => { playSound('paper'); showStep(5); });
+  $('revealSecondRoom').addEventListener('click', () => { playSound('door'); showStep(6); });
+  $('nextFromSecondRoom').addEventListener('click', () => { playSound('paper'); updatePrice(); showStep(7); });
+  $('goBeyondPrice').addEventListener('click', () => { playSound('door'); startScare(); });
+  $('skipScare').addEventListener('click', finishScare);
 
   $('restartButton').addEventListener('click', () => {
+    cancelScareTimers();
     selectedSlot = '';
     guestNames = [];
     phone = '';
@@ -330,9 +432,11 @@
     setError('guestError', '');
     setError('bookingError', '');
     $('selectionSummary').textContent = '방문 시간을 하나 선택하세요.';
+    updatePrice();
     showStep(1);
   });
 
   if (!configured && !preview) console.warn('예약 서버 URL을 config.js에서 설정해주세요.');
+  updatePrice();
   showStep(1);
 })();

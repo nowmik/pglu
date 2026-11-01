@@ -179,7 +179,7 @@ button:focus-visible,input:focus-visible { outline:2px solid #f5d6a5;outline-off
 .forgotten-button img { width:100%;height:auto;max-height:100dvh;object-fit:contain }
 /* 07 — 원본 마지막 안내 */
 .note-screen { min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#842021;padding:0 0 max(env(safe-area-inset-bottom, 8px),8px) }
-.original-final-art { display:block;width:100%;height:auto;max-height:calc(100dvh - 48px);object-fit:contain }
+.original-final-art { display:block;width:100%;height:auto;max-height:calc(100dvh - 150px);object-fit:contain }
 .final-restart { border:0;background:transparent;color:#f8d8cf;text-decoration:underline;text-underline-offset:5px;font-size:11px;padding:10px;letter-spacing:.2px }
 .outline-button { border:1px solid #b78b60;color:#f3d4b2;background:#261710;padding:12px 17px;font-size:14px }
 .item-modal { position:fixed;inset:0;z-index:50;background:#0b0707ed;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 12px;gap:11px }
@@ -199,3 +199,111 @@ button:focus-visible,input:focus-visible { outline:2px solid #f5d6a5;outline-off
   .slot-check { left:10px; width:22px; height:22px; }
 }
 
+
+/* V9: 소리 버튼 / 초대장 모션 / 인원별 금액 표시 */
+.sound-toggle { position:fixed;z-index:24;right:calc(50% - min(50vw,270px) + 12px);top:calc(env(safe-area-inset-top,0px) + 9px);background:#1f120fe8;border:1px solid #86694b;color:#e8c9a5;font-size:11px;letter-spacing:.2px;border-radius:24px;padding:9px 11px;min-height:34px; }
+.sound-toggle[aria-pressed="true"] { background:#51301e;border-color:#d5b381;color:#fff0cf; }
+.price-ledger {margin:0 0 24px;padding:18px 18px 14px;background:#541b1cc4;border:1px solid #d0a28a9c;box-shadow:inset 0 0 0 3px #5f2424,inset 0 0 0 4px #c3977650;color:#f1d9c8;}
+.price-eyebrow {text-align:center;font:500 15px 'Cormorant Garamond',serif;letter-spacing:2px;margin-bottom:11px;color:#eac4aa;}
+.price-line,.price-total {display:flex;justify-content:space-between;align-items:center;gap:14px;line-height:1.9;font-size:12px;}
+.price-line strong {font-size:13px;font-weight:500;}
+.price-total {margin-top:9px;border-top:1px solid #aa7563;padding-top:8px;font-size:13px;}
+.price-total strong {font-size:22px;letter-spacing:.3px;color:#ffe3b0;font-weight:600;}
+.booking-price {display:flex;align-items:baseline;justify-content:space-between;padding:11px 6px 15px;margin:0 0 12px;border-top:1px solid #6c4d39;color:#d6b89a;gap:12px;font-size:12px;}
+.booking-price strong {font-size:20px;font-weight:600;color:#f2d4a8;white-space:nowrap;}
+.final-price {width:calc(100% - 30px);padding:13px 12px;border:1px solid #c28874;background:#64191cc9;text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center;margin-top:1px;}
+.final-price small {color:#efd1c1;font-size:11px;}
+.final-price strong {color:#fff0da;font-size:24px;letter-spacing:.5px;}
+.final-price span {color:#e2bbaa;font-size:11px;}
+@keyframes manorArrival {0%{opacity:.6;transform:translateY(7px) scale(.978)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes invitationArrival {from{opacity:.4;transform:translateY(15px) scale(.989)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes modalReveal {from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+.intro-screen.active .manor-image { animation:manorArrival 1.15s ease both; }
+.screen.active[data-screen="2"] .invitation-wrap { animation:invitationArrival .65s cubic-bezier(.2,.75,.3,1) both; }
+.item-modal:not([hidden]) img { animation:modalReveal .32s ease-out both; }
+@media (prefers-reduced-motion:reduce) { .intro-screen.active .manor-image,.screen.active[data-screen="2"] .invitation-wrap,.item-modal:not([hidden]) img {animation:none!important;} }
+
+
+/* V10 — 기획자가 제공한 인원별 원본 이미지와 마지막 7초 연출 */
+.price-screen,
+.scare-screen {
+  min-height:100dvh;
+  background:#841e20;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:48px 0 max(14px,env(safe-area-inset-bottom,14px));
+}
+.price-illustration {
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:calc(100dvh - 132px);
+  object-fit:contain;
+  margin:0 auto;
+}
+.price-continue {
+  width:calc(100% - 50px);
+  min-height:49px;
+  margin:8px auto 0;
+  color:#ffe6d6;
+  background:linear-gradient(180deg,#581a1b,#3e1517);
+  border:1px solid #ce9a87;
+  outline-offset:3px;
+  font-size:14px;
+  letter-spacing:.5px;
+  box-shadow:inset 0 0 0 2px #401315,inset 0 0 0 3px #af796f5e;
+}
+.price-continue span { margin-left:12px; }
+.scare-stage {
+  position:relative;
+  width:100%;
+  max-height:calc(100dvh - 118px);
+  aspect-ratio:551 / 839;
+  margin:auto 0 0;
+}
+.scare-stage img {
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+}
+.scare-warning { opacity:0; }
+.scare-stage.phase-flash .scare-warning {
+  /* 1초당 한 번만 바뀌게 하여 빠른 스트로브를 피함 */
+  animation:warningPulse 1s steps(1,end) infinite;
+}
+.scare-stage.phase-red .scare-warning { opacity:1; }
+@keyframes warningPulse {
+  0%,49.99% {opacity:0;}
+  50%,100% {opacity:1;}
+}
+.scare-actions {
+  min-height:58px;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:8px 0 0;
+}
+.scare-control {
+  padding:9px 18px;
+  background:transparent;
+  border:1px solid #bd786f;
+  color:#f5d0c9;
+  font-size:12px;
+  letter-spacing:.2px;
+}
+body:has(.scare-screen.active) .step-counter,
+body:has(.scare-screen.active) #soundToggle,
+body:has(.price-screen.active) .step-counter {
+  opacity:.28;
+}
+@media (prefers-reduced-motion:reduce) {
+ .scare-stage.phase-flash .scare-warning {animation:none!important;opacity:0!important;}
+}
