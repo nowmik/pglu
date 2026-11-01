@@ -67,8 +67,17 @@ button:focus-visible,input:focus-visible { outline:2px solid #f5d6a5;outline-off
 .add-guest:disabled { opacity:.48 }
 .remove-guest { border:0;background:transparent;color:#ffe5d4;font-size:12px;float:right;padding:0 5px }
 .phone-field { margin:0 0 23px }
-.phone-field input { border:0;border-bottom:1px solid #db9e91;background:transparent;padding:12px 7px;color:#fff5e9;font-size:18px;letter-spacing:1px }
-.phone-field input:focus-visible { outline-offset:2px }
+.phone-field-heading {display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:#ffe4d5;margin-bottom:11px;letter-spacing:1px}
+.phone-field-heading em {font-family:'Cormorant Garamond',Georgia,serif;font-size:12px;letter-spacing:1px;font-style:normal;color:#ddb6a1}
+.phone-segments {display:flex;align-items:center;justify-content:center;gap:clamp(4px,2vw,12px);padding:13px 10px 11px;border:1px solid #bd8a75;background:linear-gradient(160deg,#591b20aa,#361115dd);box-shadow:inset 0 0 0 3px #4e1a1d;min-height:64px}
+.phone-segments .phone-part {min-width:0;min-height:40px;border:0;border-bottom:1px solid #cba58c;border-radius:0;background:transparent;box-shadow:none;outline:none;padding:5px 0;color:#fff4e2;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:clamp(18px,5.1vw,24px);font-weight:500;letter-spacing:1px;text-align:center;flex:0 1 auto;appearance:none}
+.phone-segments .phone-prefix {width:3.4ch;flex-basis:3.4ch}
+.phone-segments .phone-middle,.phone-segments .phone-last {width:4.7ch;flex-basis:4.7ch}
+.phone-segments .phone-part::placeholder {color:#bb8f82;opacity:1}
+.phone-segments .phone-part:focus-visible,.phone-segments .phone-part:focus {outline:0;border-bottom:2px solid #f8d19e;background:#a5775218}
+.phone-separator {font-size:21px;color:#e9c49b;font-family:serif;line-height:1;flex-shrink:0;user-select:none}
+.phone-field-hint {margin:8px 0 0;text-align:center;color:#d7b1a2;font-size:11px;line-height:1.5}
+@media(max-width:360px) { .phone-segments {padding-inline:6px;gap:5px}.phone-segments .phone-part {font-size:18px;letter-spacing:0} }
 .consent { display:flex;align-items:flex-start;gap:10px;margin:18px 0 22px;color:#f4dbcb;font-size:12px;line-height:1.6 }
 .consent input { width:18px;height:18px;flex-shrink:0;accent-color:#b87e6a;margin-top:3px }
 .consent strong { display:block;font-weight:500 }

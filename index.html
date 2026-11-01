@@ -7,7 +7,7 @@
   <meta name="description" content="저택의 초대장 · 방문 예약" />
   <title>Pumping Ghost Love You — Invitation</title>
   <link rel="preload" href="manor.webp" as="image" />
-  <link rel="stylesheet" href="style.css?v=7" />
+  <link rel="stylesheet" href="style.css?v=8" />
   <script src="config.js?v=4" defer></script>
   <script src="app.js?v=7" defer></script>
 </head>
@@ -48,10 +48,19 @@
               <p class="ledger-note">리본에 대표 방문자 이름을 적어주세요.<br />동행인이 있다면 아래에 추가할 수 있습니다.</p>
               <div id="extraNameFields" class="name-fields"></div>
               <button class="add-guest" id="addGuest" type="button"><span aria-hidden="true">✧</span> 동행인 이름 추가 <small>(최대 4명)</small></button>
-              <label class="field phone-field" for="phoneInput">
-                <span>연락처 <em>CONTACT NUMBER</em></span>
-                <input id="phoneInput" type="tel" name="phone" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="010 - 0000 - 0000" required />
-              </label>
+              <div class="field phone-field">
+                <div class="phone-field-heading" id="phoneLabel">연락처 <em>CONTACT NUMBER</em></div>
+                <div class="phone-segments" role="group" aria-labelledby="phoneLabel">
+                  <input id="phonePrefix" class="phone-part phone-prefix" type="tel" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="3" value="010" aria-label="휴대전화 앞자리 3자리" />
+                  <span class="phone-separator" aria-hidden="true">−</span>
+                  <input id="phoneMiddle" class="phone-part phone-middle" type="tel" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="0000" aria-label="휴대전화 가운데 3~4자리" />
+                  <span class="phone-separator" aria-hidden="true">−</span>
+                  <input id="phoneLast" class="phone-part phone-last" type="tel" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="0000" aria-label="휴대전화 마지막 4자리" />
+                </div>
+                <!-- 예약 서버와 통신할 때는 기존 방식대로 숫자만 전달합니다. -->
+                <input id="phoneInput" type="hidden" name="phone" value="" />
+                <p class="phone-field-hint">하이픈은 자동으로 표시돼요. 숫자만 입력해주세요.</p>
+              </div>
               <label class="consent"><input id="privacyConsent" type="checkbox" required /><span><strong>[필수] 개인정보 수집·이용 동의</strong><small>예약 확인과 안내를 위해 이름·전화번호·방문 일정·인원을 수집하며, 행사 종료 후 30일 이내 삭제합니다.</small></span></label>
               <p class="inline-error" id="guestError" role="alert" hidden></p>
               <button type="submit" class="gold-button guest-submit"><span aria-hidden="true">✧</span> 명부를 제출하고 계속하기 <span aria-hidden="true">✧</span></button>
@@ -136,6 +145,52 @@
     <button class="outline-button modal-back" type="button" id="itemBack">응접실로 돌아가기</button>
   </div>
 
+  <script>
+  /* 전화번호 하이픈은 화면에 고정하고, 실제 저장은 숫자로만 처리합니다. */
+  (() => {
+    const ids = ['phonePrefix', 'phoneMiddle', 'phoneLast'];
+    const parts = ids.map(id => document.getElementById(id));
+    const phoneInput = document.getElementById('phoneInput');
+    const clean = value => String(value || '').replace(/[^0-9]/g, '');
+    const sync = () => { phoneInput.value = parts.map(part => clean(part.value)).join(''); };
+    const fillFullPhone = digits => {
+      if (!/^01[0-9]{8,9}$/.test(digits)) return false;
+      parts[0].value = digits.slice(0, 3);
+      parts[1].value = digits.slice(3, -4);
+      parts[2].value = digits.slice(-4);
+      sync();
+      parts[2].focus();
+      return true;
+    };
+    parts.forEach((part, index) => {
+      part.addEventListener('input', () => {
+        const digits = clean(part.value);
+        if (digits.length > part.maxLength && fillFullPhone(digits)) return;
+        part.value = digits.slice(0, part.maxLength);
+        sync();
+        if (part.value.length === part.maxLength && index < 2 && document.activeElement === part) {
+          parts[index + 1].focus();
+        }
+      });
+      part.addEventListener('paste', event => {
+        const pasted = clean(event.clipboardData?.getData('text'));
+        if (pasted.length >= 10 && /^01[0-9]{8,9}$/.test(pasted)) {
+          event.preventDefault();
+          fillFullPhone(pasted);
+        }
+      });
+      part.addEventListener('keydown', event => {
+        if (event.key === 'Backspace' && !part.value && index > 0) {
+          parts[index - 1].focus();
+        }
+      });
+    });
+    document.getElementById('guestForm').addEventListener('reset', () => {
+      // form.reset() 이후 표시된 입력값과 서버 전송용 값을 동기화합니다.
+      phoneInput.value = '';
+    });
+  })();
+  </script>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>
