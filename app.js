@@ -11,8 +11,10 @@
   const ITEM_IMAGES = {
     book: { src: 'book.webp', title: '이방인' },
     revolver: { src: 'revolver.webp', title: '리볼버' },
-    family: { src: 'family.webp', title: '가족사진' }
+    family: { src: 'family.webp', title: '가족사진' },
+    clock: { src: 'clock.png', title: '괴종시계' }
   };
+
   let currentStep = 1;
   let guestNames = [];
   let phone = '';
@@ -22,31 +24,24 @@
   let reservationRequestId = null;
   let reservationDone = false;
   let submitting = false;
-  const discovered = new Set();
+  const discoveredFirst = new Set();
+  const discoveredSecond = new Set();
   const preview = new URLSearchParams(location.search).get('preview') === '1';
   const url = String(window.BOOKING_CONFIG?.gasWebAppUrl || '').trim();
   const configured = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url);
 
   function showStep(step) {
-    currentStep = step;
+    currentStep = Number(step);
     document.querySelectorAll('[data-screen]').forEach(screen => {
       const open = String(screen.dataset.screen) === String(step);
       screen.hidden = !open;
       screen.classList.toggle('active', open);
     });
-    $('stepNumber').textContent = step === 'notice' ? '05' : String(step).padStart(2, '0');
+    $('stepNumber').textContent = String(currentStep).padStart(2, '0');
     window.scrollTo(0, 0);
-    if (step === 3) refreshAvailability();
-    if (step === 4) {
-      requestAnimationFrame(() => {
-        const view = $('roomViewport');
-        if (view && !view.dataset.positioned) {
-          view.scrollLeft = Math.max(0, (view.scrollWidth - view.clientWidth) * .28);
-          view.dataset.positioned = 'yes';
-        }
-      });
-    }
+    if (currentStep === 3) refreshAvailability();
   }
+
   function toast(message) {
     const node = $('toast');
     node.textContent = message;
@@ -54,14 +49,17 @@
     clearTimeout(toast.timer);
     toast.timer = setTimeout(() => node.hidden = true, 3800);
   }
+
   function setError(id, message) {
     $(id).textContent = message;
     $(id).hidden = !message;
   }
+
   function updateGuestButton() {
     const extras = document.querySelectorAll('#extraNameFields input').length;
     $('addGuest').disabled = extras >= 3;
   }
+
   function addNameField() {
     const count = document.querySelectorAll('#extraNameFields input').length;
     if (count >= 3) return;
@@ -86,20 +84,25 @@
     updateGuestButton();
     input.focus();
   }
+
   $('addGuest').addEventListener('click', addNameField);
   $('enterButton').addEventListener('click', () => showStep(2));
+
   $('guestForm').addEventListener('submit', (event) => {
     event.preventDefault();
     const names = [$('primaryGuestName'), ...document.querySelectorAll('#extraNameFields input')].map(el => el.value.trim());
     const digits = $('phoneInput').value.replace(/\D/g, '');
     if (names.some(n => !n || n.length > 32 || !/^[\p{L} .'-]{1,32}$/u.test(n))) {
-      setError('guestError', '방문자와 동행인의 이름을 정확히 입력해주세요.'); return;
+      setError('guestError', '방문자와 동행인의 이름을 정확히 입력해주세요.');
+      return;
     }
     if (!/^01\d{8,9}$/.test(digits)) {
-      setError('guestError', '연락처는 010-1234-5678 형태의 휴대전화 번호로 입력해주세요.'); return;
+      setError('guestError', '연락처는 010-1234-5678 형태의 휴대전화 번호로 입력해주세요.');
+      return;
     }
     if (!$('privacyConsent').checked) {
-      setError('guestError', '개인정보 수집 및 이용 동의가 필요합니다.'); return;
+      setError('guestError', '개인정보 수집 및 이용 동의가 필요합니다.');
+      return;
     }
     setError('guestError', '');
     guestNames = names;
@@ -112,7 +115,7 @@
     if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
     return 'req-' + Date.now() + '-' + Math.random().toString(36).slice(2);
   }
-  // GET 요청에는 공개 예약 현황 및 무작위 요청 번호만 보냅니다. 개인정보는 절대 넣지 않습니다.
+
   function publicQuery(action, params = {}) {
     return new Promise((resolve, reject) => {
       if (!configured) return reject(new Error('예약 서버가 연결되지 않았습니다.'));
@@ -135,7 +138,7 @@
       document.head.appendChild(script);
     });
   }
-  // 개인정보는 POST 본문으로만 보냅니다. GAS의 CORS 제약 때문에 결과는 요청번호로 따로 확인합니다.
+
   async function submitBooking(data) {
     try {
       await fetch(url, {
@@ -144,7 +147,6 @@
         body: new URLSearchParams({ payload: JSON.stringify(data) })
       });
     } catch (error) {
-      // 네트워크 오류가 있어도 서버에서 접수가 진행됐을 수 있으므로 요청번호를 먼저 확인합니다.
       console.warn('예약 전송 응답을 확인할 수 없어 예약번호로 재확인합니다.');
     }
     for (let attempt = 0; attempt < 24; attempt++) {
@@ -153,7 +155,7 @@
       try {
         status = await publicQuery('status', { requestId: data.requestId });
       } catch (error) {
-        continue; // 일시적인 조회 장애는 다시 확인합니다.
+        continue;
       }
       if (status.status === 'confirmed') return { status: 'confirmed' };
       if (status.status === 'rejected') throw new Error(status.error || '예약이 거절되었습니다.');
@@ -166,12 +168,14 @@
     paintSlots();
     $('availabilityMessage').textContent = '미리보기 모드: 실제 예약은 저장되지 않습니다.';
   }
+
   async function refreshAvailability() {
     if (preview) return setOfflinePreview();
     if (!configured) {
       serverReady = false;
       $('availabilityMessage').textContent = '시간은 선택할 수 있습니다. 실제 예약 확정은 구글 시트 연결 후 가능합니다.';
-      paintSlots(); return;
+      paintSlots();
+      return;
     }
     try {
       const result = await publicQuery('availability');
@@ -188,13 +192,12 @@
       paintSlots();
     }
   }
+
   function paintSlots() {
     document.querySelectorAll('.slot-button').forEach(button => {
       const slot = slots[button.dataset.slot];
       const closed = !!slot && (slot.closed || slot.remaining < Math.max(guestNames.length, 1));
       const missing = serverReady && !slot && !preview;
-      // 예약 서버 연결 전에도 날짜 체크 표시를 사용해 볼 수 있습니다.
-      // 실제 예약 확정은 서버 조회 및 정원 검증 후에만 가능합니다.
       button.disabled = closed || missing;
       button.classList.toggle('is-closed', closed);
       button.setAttribute('aria-pressed', String(button.dataset.slot === selectedSlot));
@@ -203,6 +206,7 @@
     $('confirmButton').disabled = !selectedSlot || submitting || reservationDone;
     $('selectionSummary').textContent = selectedSlot ? `✓ ${SLOT_LABELS[selectedSlot]} · ${guestNames.length}명` : '방문 시간을 하나 선택하세요.';
   }
+
   document.querySelectorAll('.slot-button').forEach(button => {
     button.addEventListener('click', () => {
       if (button.disabled) return;
@@ -212,6 +216,7 @@
       paintSlots();
     });
   });
+
   $('confirmButton').addEventListener('click', async () => {
     if (!selectedSlot || submitting || reservationDone) return;
     if (preview) {
@@ -272,10 +277,16 @@
   document.querySelectorAll('[data-item]').forEach(button => {
     button.addEventListener('click', () => {
       const id = button.dataset.item;
+      const room = button.dataset.room;
       const item = ITEM_IMAGES[id];
       if (!item) return;
-      discovered.add(id);
-      $('discoveryCount').textContent = String(discovered.size);
+      if (room === 'second') {
+        discoveredSecond.add(id);
+        $('discoveryCount2').textContent = String(discoveredSecond.size);
+      } else {
+        discoveredFirst.add(id);
+        $('discoveryCount').textContent = String(discoveredFirst.size);
+      }
       $('itemImage').src = item.src;
       $('itemImage').alt = `${item.title} 단서 이미지`;
       $('itemTitle').textContent = item.title;
@@ -283,27 +294,37 @@
       $('closeItem').focus();
     });
   });
+
   function closeModal() { $('itemModal').hidden = true; }
   $('closeItem').addEventListener('click', closeModal);
   $('itemBack').addEventListener('click', closeModal);
-  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !$('itemModal').hidden) closeModal(); });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !$('itemModal').hidden) closeModal();
+  });
+
   $('nextFromRoom').addEventListener('click', () => showStep(5));
-  $('revealNotice').addEventListener('click', () => showStep('notice'));
+  $('revealSecondRoom').addEventListener('click', () => showStep(6));
+  $('nextFromSecondRoom').addEventListener('click', () => showStep(7));
+
   $('restartButton').addEventListener('click', () => {
-    // 기존 예약을 다시 접수하지 않도록 화면만 시작 위치로 되돌립니다.
     selectedSlot = '';
     guestNames = [];
     phone = '';
     reservationRequestId = null;
     reservationDone = false;
-    discovered.clear();
+    discoveredFirst.clear();
+    discoveredSecond.clear();
     $('guestForm').reset();
     document.querySelectorAll('#extraNameFields .field').forEach(field => field.remove());
     $('addGuest').disabled = false;
     $('discoveryCount').textContent = '0';
-    $('roomViewport').dataset.positioned = '';
+    $('discoveryCount2').textContent = '0';
+    setError('guestError', '');
+    setError('bookingError', '');
+    $('selectionSummary').textContent = '방문 시간을 하나 선택하세요.';
     showStep(1);
   });
+
   if (!configured && !preview) console.warn('예약 서버 URL을 config.js에서 설정해주세요.');
   showStep(1);
 })();
